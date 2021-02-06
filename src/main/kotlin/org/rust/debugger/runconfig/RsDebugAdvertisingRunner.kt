@@ -20,6 +20,8 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdve
 import com.intellij.util.PlatformUtils
 import org.rust.cargo.runconfig.RsDefaultProgramRunnerBase
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.debugger.NATIVE_DEBUGGING_SUPPORT_PLUGIN_ID
+import org.rust.debugger.nativeDebuggingSupportPlugin
 
 class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
 
@@ -27,20 +29,18 @@ class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
         if (executorId != DefaultDebugExecutor.EXECUTOR_ID) return false
         if (profile !is CargoCommandConfiguration) return false
         if (!(PlatformUtils.isIdeaUltimate() || PlatformUtils.isRubyMine())) return false
-        val id = PluginId.getId(NATIVE_DEBUG_PLUGIN_ID)
-        val plugin = PluginManagerCore.getPlugin(id)
+        val plugin = nativeDebuggingSupportPlugin()
         val loadedPlugins = PluginManagerCore.getLoadedPlugins()
         return plugin !in loadedPlugins || plugin?.isEnabled != true
     }
 
     override fun execute(environment: ExecutionEnvironment) {
-        val id = PluginId.getId(NATIVE_DEBUG_PLUGIN_ID)
-        val plugin = PluginManagerCore.getPlugin(id)
+        val plugin = nativeDebuggingSupportPlugin()
         val pluginsState = InstalledPluginsState.getInstance()
 
         val action = when {
             // Not installed
-            plugin == null && !pluginsState.wasInstalled(id) -> Action.INSTALL
+            plugin == null && !pluginsState.wasInstalled(NATIVE_DEBUGGING_SUPPORT_PLUGIN_ID) -> Action.INSTALL
             // Disabled
             plugin?.isEnabled == false -> Action.ENABLE
             // Restart required
@@ -58,7 +58,7 @@ class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
         )
 
         if (options == Messages.OK) {
-            action.doOkAction(project, id)
+            action.doOkAction(project, NATIVE_DEBUGGING_SUPPORT_PLUGIN_ID)
         }
     }
 
@@ -66,7 +66,6 @@ class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
 
     companion object {
         const val RUNNER_ID: String = "RsDebugAdvertisingRunner"
-        private const val NATIVE_DEBUG_PLUGIN_ID: String = "com.intellij.nativeDebug"
     }
 
     private enum class Action {
